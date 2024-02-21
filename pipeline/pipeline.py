@@ -1,2 +1,2 @@
-import calibrate, backgroundSubtraction, silhouetteReconstruction
+import calibrateIntrinsics, backgroundSubtraction, silhouetteReconstruction
 
