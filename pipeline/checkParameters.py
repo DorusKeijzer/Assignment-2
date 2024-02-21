@@ -2,73 +2,39 @@ import cv2 as cv
 import numpy as np
 import glob
 from constants import *
-import xml.etree.ElementTree as ET
-import xml.dom.minidom as minidom
 
+AXIS = np.float32([[3,0,0], [0,3,0], [0,0,-3], [1,0,0],[0,1,0],[0,0,-1],[0,0,0 ],  [1,1,0], [0,0,0],[0,0,0],[1,1,0], [1,1,0],[0,0,-1],[1,1,-1], [1,1,-1],
+                       [1,0,-1],[0,1,-1],[0,1,-1],[0,0,-1],[1,1,-1],[0,1,0],[1,0,0], [0,1,0], [1,0,0],[1,0,-1], [0,1,-1], [1,0,-1]])
 
 # Allows us to iterate over each camera
 cams = glob.glob("../data/*/")
 cv.namedWindow('image')
 
+def drawcube(img, corners, imgpts):
+    imgpts = np.int32(imgpts).reshape(-1,2)
+    # draw pillars in blue color
+    for i,j in zip(range(12),range(12,24)):
+        img = cv.line(img, tuple(imgpts[i]), tuple(imgpts[j]),(66, 245, 236),1)
+    return img
 
-# stores the pixels coordinates of the clicks
-clickcorners = []
-
-def interpolate(corners, chessboardwidth, chessboardheight):
-    """Expects:
-       the pixel coordinates of the 4 corners of a chessboard in an np array of size 4
-       the proportions of the chessboard, 
-
-       returns where the internal crossings are as a np array of size (chessboardwidth x chessboard height) """
-
-    # the coordinates of the outer corners of the chessboard in chessboard coordinates
-    # these will be used to solve for the transformation matrix
-    # manual coordinates need to be specified in the same order (Bottom right, bottom left, top right, top left)
-    corner_chesscoordinates = np.float32([[0,0], 
-                         [0,chessboardwidth-1], 
-                         [chessboardheight-1, 0], 
-                         [chessboardheight-1, chessboardwidth-1]])   
+def drawaxes(img, corners, imgpts):
+    # Extracting corner coordinates properly
+    corner = tuple(corners[0].ravel())
+    corner = tuple(map(int, corner))
+    # Extracting imgpts coordinates properly
+    imgpts = np.int32(imgpts).reshape(-1, 2)
+    imgpts = imgpts.astype(int)  # Convert imgpts to Python integers
     
-    # Finds the transformation matrix 
-    TransformationMatrix = cv.getPerspectiveTransform(corner_chesscoordinates, corners)
+    # Drawing lines from corner to imgpts        
+    img = cv.line(img, corner, tuple(imgpts[0]), (255, 0, 0), 2)
+    img = cv.line(img, corner, tuple(imgpts[1]), (0, 255, 0), 2)
+    img = cv.line(img, corner, tuple(imgpts[2]), (0, 0, 255), 2)
 
-    # The coordinates of the chessboard corners in chessboard coordinates (i.e. [[[0,0]],[[0,1]],[[0,2]],...
-    #                                                                            [[1,1]],[[1,2]],[[1,3]],..)
-    chessboard_coords = np.float32([[[x, y]] for x in range(chessboardheight) for y in range(chessboardwidth)])
+    return img
 
-    # applies the transformation
-    inner_corners = cv.perspectiveTransform(chessboard_coords, TransformationMatrix)
-    return inner_corners.reshape(-1, 2)
-
-def click_event(event, x, y, flags, param): 
-    """Temporarily stores the clicked pixel coordinates to the global variable'clickcorners'"""
-    img = param
-    if event == cv.EVENT_FLAG_LBUTTON:
-        cv.circle(img, (x,y), 1, (0,0,255),-1)
-        clickcorners.append([x,y])
-        cv.imshow("image", img)
-
-def readIntinsics(camera_path):
-    """Takes the filepath for the directory of a camera and reads the intrinsics.xml file
-    Returns the camera matrix and distrotion coefficients"""
-    tree = ET.parse(camera_path + 'intrinsics.xml')
-    root = tree.getroot()
-
-    camera_matrix_elem = root.find('CameraMatrix')
-    distortion_coeffs_elem = root.find('DistortionCoeffs')
-
-    # Extract data from CameraMatrix and DistortionCoeffs elements
-    camera_matrix_data = camera_matrix_elem.find('data').text.strip().split()
-    distortion_coeffs_data = distortion_coeffs_elem.find('data').text.strip().split()
-
-    # Convert data to appropriate format (float in this case)
-    CameraMatrix = np.array(list(map(float, camera_matrix_data)), dtype=np.float32).reshape((3, 3))
-    DistortionCoeffs = np.array(list(map(float, distortion_coeffs_data)), dtype=np.float32)
-
-    return CameraMatrix, DistortionCoeffs
-
-def readIntrinsics(camera_path):
-    fs = cv.FileStorage("camera_params.xml", cv2.FILE_STORAGE_READ)
+def readConfig(camera_path):
+    """Reads configs.xml and gives the camera parameters"""
+    fs = cv.FileStorage("camera_params.xml", cv.FILE_STORAGE_READ)
 
     # Read camera matrix
     camera_matrix = fs.getNode("CameraMatrix").mat()
@@ -78,50 +44,19 @@ def readIntrinsics(camera_path):
     dist_coeffs = fs.getNode("DistortionCoeffs").mat()
     dist_coeffs = np.array(list(map(float, dist_coeffs)), dtype=np.float32)
 
+    rvec = fs.getnode("Rvec").mat()
+    tvec = fs.getnode("Tvec").mat()
+    corners = fs.getnode("Corners").mat(0)
+
     fs.release()
-    return camera_matrix, dist_coeffs
-
-
-
-def manualCorners() -> np.array:
-    """ALlows the user to specify the corners. 
-    These corners should be given in the same order as the program does.
-    returns an array of the correct size with the corner points
-    
-    Order of clicks is important. : 
-    Bottom right, bottom left, top right, top left
-    """
-    
-    # The mouse click event writes the corners to this variable, hence it's used here.
-    global clickcorners    
-
-    # Waits for the user to click 4 corners
-    while(len(clickcorners)<4):
-        cv.waitKey(3)
-    
-    # stores these corners in an np array 
-    res = np.array(clickcorners, dtype=np.float32)
-
-    clickcorners = []
-
-    return res
-
-# [0. 0.], [1. 0.], [2. 0.], [3. 0.], [4. 0.], ... [1,9], [1,1], etc.
-objectpoints = np.mgrid[0:CHESSBOARDWIDTH,0:CHESSBOARDHEIGHT].T.reshape(-1,2)
-objectpoints = objectpoints.astype(np.float32) 
-objectpoints = np.hstack((objectpoints, np.zeros((objectpoints.shape[0], 1), dtype=np.float32))) # turns into 3d points with z = 0
-objectpoints = SQUARESIZE * objectpoints # multiply with the size of the square
+    return camera_matrix, dist_coeffs, rvec, tvec, corners
 
 if __name__ == "__main__":
-
-
     for cam in cams:
         # reads the xml file corresponding to this camera
-        cameraMatrix, distCoeffs = readIntinsics(cam)
+        cameraMatrix, distCoeffs, rvec, tvec, corners = readConfig(cam)
 
-        # to store object points and image points from all the images.
-
-        # open the checkerboard video file for this camera
+        # open the checkerboard video file for this camera in order to draw the cube
         calibration_video_path = cam + "checkerboard.avi"
         print(f"Reading {calibration_video_path}" )
         cap = cv.VideoCapture(calibration_video_path)
@@ -132,27 +67,12 @@ if __name__ == "__main__":
             exit()
 
         ret, frame = cap.read()
-        cv.setMouseCallback('image', click_event, frame)
-        cv.imshow("image", frame)
-        print(f"Please manually specify the corner points for {calibration_video_path}")
-        
+        imgpts, _ = cv.projectPoints(AXIS, rvec, tvec, cameraMatrix, distCoeffs )
+        # draw the cube and the axes
+        img = drawaxes(img, corners, imgpts[0:3])
+        img = drawcube(img, corners, imgpts[3:])
 
-        outercorners = manualCorners()
-        innercorners = interpolate(outercorners, CHESSBOARDWIDTH, CHESSBOARDHEIGHT) 
-        cv.drawChessboardCorners(frame, (CHESSBOARDWIDTH, CHESSBOARDHEIGHT), innercorners, True)
         cv.imshow("image", frame)
         cv.waitKey(500)
-
-        ret, rvec, tvec = cv.solvePnP(objectpoints, innercorners, cameraMatrix, distCoeffs)
-        # Release the VideoCapture object 
-        fs = cv.FileStorage(cam+"configs.xml", cv.FILE_STORAGE_WRITE)
-
-        fs.write("camera_matrix", cameraMatrix)
-        fs.write("dist_coeffs", distCoeffs)
-        fs.write("rvec", rvec)
-        fs.write("tvec", tvec)
-
-        fs.release()
-        print(f"Camera parameters written to {cam}configs.xml")
 
         cap.release()

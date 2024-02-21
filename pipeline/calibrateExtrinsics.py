@@ -47,15 +47,11 @@ def click_event(event, x, y, flags, param):
 
 def readIntrinsics(camera_path):
     """Reads the intrinsics.xml file and returns the camera matrix and distortion coefficients"""
-    fs = cv.FileStorage("camera_params.xml", cv2.FILE_STORAGE_READ)
-
+    fs = cv.FileStorage(camera_path + "intrinsics.xml", cv.FILE_STORAGE_READ)
     # Read camera matrix
-    camera_matrix = fs.getNode("CameraMatrix").mat()
-    camera_matrix = np.array(list(map(float, camera_matrix)), dtype=np.float32).reshape((3, 3))
-    
+    camera_matrix = fs.getNode("CameraMatrix").mat()    
     # Read distortion coefficients
     dist_coeffs = fs.getNode("DistortionCoeffs").mat()
-    dist_coeffs = np.array(list(map(float, dist_coeffs)), dtype=np.float32)
 
     fs.release()
     return camera_matrix, dist_coeffs
@@ -92,7 +88,7 @@ objectpoints = SQUARESIZE * objectpoints # multiply with the size of the square
 if __name__ == "__main__":
     for cam in cams:
         # reads the xml file corresponding to this camera
-        cameraMatrix, distCoeffs = readIntinsics(cam)
+        cameraMatrix, distCoeffs = readIntrinsics(cam)
 
         # to store object points and image points from all the images.
 
@@ -124,10 +120,11 @@ if __name__ == "__main__":
         # writes vectors to configs.xml
         fs = cv.FileStorage(cam+"configs.xml", cv.FILE_STORAGE_WRITE)
 
-        fs.write("camera_matrix", cameraMatrix)
-        fs.write("dist_coeffs", distCoeffs)
-        fs.write("rvec", rvec)
-        fs.write("tvec", tvec)
+        fs.write("CameraMatrix", cameraMatrix)
+        fs.write("DistortionCoeffs", distCoeffs)
+        fs.write("Rvec", rvec)
+        fs.write("Tvec", tvec)
+        fs.write("Corners", innercorners)
 
         fs.release()
         print(f"Camera parameters written to {cam}configs.xml")
