@@ -2,44 +2,12 @@ import cv2 as cv
 import numpy as np
 import glob
 from constants import *
-import xml.etree.ElementTree as ET
-import xml.dom.minidom as minidom
-
 
 # Allows us to iterate over each camera
 cams = glob.glob("../data/*/")
 
 # termination criteria for findchessboard
 criteria = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 30, 0.001)
-
-
-def writeToXML(filepath, camera_matrix, distortion_coeffs):
-    # Create XML structure
-    root = ET.Element("opencv_storage")
-
-    # CameraMatrix
-    camera_matrix_elem = ET.SubElement(root, "CameraMatrix", type_id="opencv-matrix")
-    ET.SubElement(camera_matrix_elem, "rows").text = str(camera_matrix.shape[0])
-    ET.SubElement(camera_matrix_elem, "cols").text = str(camera_matrix.shape[1])
-    ET.SubElement(camera_matrix_elem, "dt").text = "f"
-    data_elem = ET.SubElement(camera_matrix_elem, "data")
-    data_elem.text = "\n".join(" ".join(map(str, row)) for row in camera_matrix)
-
-    # DistortionCoeffs
-    distortion_coeffs_elem = ET.SubElement(root, "DistortionCoeffs", type_id="opencv-matrix")
-    ET.SubElement(distortion_coeffs_elem, "rows").text = str(distortion_coeffs.shape[0])
-    ET.SubElement(distortion_coeffs_elem, "cols").text = str(distortion_coeffs.shape[1])
-    ET.SubElement(distortion_coeffs_elem, "dt").text = "f"
-    data_elem = ET.SubElement(distortion_coeffs_elem, "data")
-    data_elem.text = "\n".join(map(str, distortion_coeffs[0]))
-
-    # Write to XML file
-    xml_str = minidom.parseString(ET.tostring(root)).toprettyxml(indent="  ")
-
-    # Write to XML file
-    with open(filepath, "w") as f:
-        f.write(xml_str)
-
 
 if __name__ == "__main__":
 
@@ -88,7 +56,13 @@ if __name__ == "__main__":
         # Release the VideoCapture object 
         cap.release()
 
-        ret, mtx, dist, rvecs, tvecs = cv.calibrateCamera(objpoints, imgpoints, grey.shape[::-1], None, None)
+        ret, mtx, dist, _, _ = cv.calibrateCamera(objpoints, imgpoints, grey.shape[::-1], None, None)
+        
+        fs = cv.FileStorage(cam+"intrinsics.xml", cv.FILE_STORAGE_WRITE)
+        fs.write("CameraMatrix", mtx)
+        fs.write("DistortionCoeffs", dist)
 
-        writeToXML(cam + "intrinsics.xml", mtx, dist)
+        fs.release()
+
+
         print(f"Intrinsics written to {cam}intrinsics.xml\n")
