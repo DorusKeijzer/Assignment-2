@@ -5,6 +5,7 @@ from constants import *
 
 AXIS = np.float32([[3,0,0], [0,3,0], [0,0,-3], [1,0,0],[0,1,0],[0,0,-1],[0,0,0 ],  [1,1,0], [0,0,0],[0,0,0],[1,1,0], [1,1,0],[0,0,-1],[1,1,-1], [1,1,-1],
                        [1,0,-1],[0,1,-1],[0,1,-1],[0,0,-1],[1,1,-1],[0,1,0],[1,0,0], [0,1,0], [1,0,0],[1,0,-1], [0,1,-1], [1,0,-1]])
+AXIS = AXIS * SQUARESIZE
 
 # Allows us to iterate over each camera
 cams = glob.glob("../data/*/")
@@ -34,20 +35,12 @@ def drawaxes(img, corners, imgpts):
 
 def readConfig(camera_path):
     """Reads configs.xml and gives the camera parameters"""
-    fs = cv.FileStorage("camera_params.xml", cv.FILE_STORAGE_READ)
-
-    # Read camera matrix
+    fs = cv.FileStorage(camera_path+"configs.xml", cv.FILE_STORAGE_READ)
     camera_matrix = fs.getNode("CameraMatrix").mat()
-    camera_matrix = np.array(list(map(float, camera_matrix)), dtype=np.float32).reshape((3, 3))
-    
-    # Read distortion coefficients
     dist_coeffs = fs.getNode("DistortionCoeffs").mat()
-    dist_coeffs = np.array(list(map(float, dist_coeffs)), dtype=np.float32)
-
-    rvec = fs.getnode("Rvec").mat()
-    tvec = fs.getnode("Tvec").mat()
-    corners = fs.getnode("Corners").mat(0)
-
+    rvec = fs.getNode("Rvec").mat()
+    tvec = fs.getNode("Tvec").mat()
+    corners = fs.getNode("Corners").mat()
     fs.release()
     return camera_matrix, dist_coeffs, rvec, tvec, corners
 
@@ -69,8 +62,8 @@ if __name__ == "__main__":
         ret, frame = cap.read()
         imgpts, _ = cv.projectPoints(AXIS, rvec, tvec, cameraMatrix, distCoeffs )
         # draw the cube and the axes
-        img = drawaxes(img, corners, imgpts[0:3])
-        img = drawcube(img, corners, imgpts[3:])
+        frame = drawaxes(frame, corners, imgpts[0:3])
+        frame = drawcube(frame, corners, imgpts[3:])
 
         cv.imshow("image", frame)
         cv.waitKey(500)
