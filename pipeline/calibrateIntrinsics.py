@@ -65,4 +65,4 @@ if __name__ == "__main__":
         fs.release()
 
 
-        print(f"Intrinsics written to {cam}intrinsics.xml\n")
+        print(f"Intrinsics written to {cam}intrinsics.xml")

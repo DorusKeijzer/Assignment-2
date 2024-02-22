@@ -2,6 +2,7 @@ import cv2 as cv
 import numpy as np
 import glob
 from constants import *
+import utils
 
 # Allows us to iterate over each camera
 cams = glob.glob("../data/*/")
@@ -45,17 +46,6 @@ def click_event(event, x, y, flags, param):
         clickcorners.append([x,y])
         cv.imshow("image", img)
 
-def readIntrinsics(camera_path):
-    """Reads the intrinsics.xml file and returns the camera matrix and distortion coefficients"""
-    fs = cv.FileStorage(camera_path + "intrinsics.xml", cv.FILE_STORAGE_READ)
-    # Read camera matrix
-    camera_matrix = fs.getNode("CameraMatrix").mat()    
-    # Read distortion coefficients
-    dist_coeffs = fs.getNode("DistortionCoeffs").mat()
-
-    fs.release()
-    return camera_matrix, dist_coeffs
-
 def manualCorners() -> np.array:
     """ALlows the user to specify the corners. 
     These corners should be given in the same order as the program does.
@@ -88,9 +78,7 @@ objectpoints = SQUARESIZE * objectpoints # multiply with the size of the square
 if __name__ == "__main__":
     for cam in cams:
         # reads the xml file corresponding to this camera
-        cameraMatrix, distCoeffs = readIntrinsics(cam)
-
-        # to store object points and image points from all the images.
+        cameraMatrix, distCoeffs = utils.readXML(cam + "intrinsics.xml", "CameraMatrix", "DistanceCoeffs")
 
         # open the checkerboard video file for this camera
         calibration_video_path = cam + "checkerboard.avi"

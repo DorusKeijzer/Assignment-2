@@ -2,6 +2,7 @@ import cv2 as cv
 import numpy as np
 import glob
 from constants import *
+import utils
 
 AXIS = np.float32([[3,0,0], [0,3,0], [0,0,-3], [1,0,0],[0,1,0],[0,0,-1],[0,0,0 ],  [1,1,0], [0,0,0],[0,0,0],[1,1,0], [1,1,0],[0,0,-1],[1,1,-1], [1,1,-1],
                        [1,0,-1],[0,1,-1],[0,1,-1],[0,0,-1],[1,1,-1],[0,1,0],[1,0,0], [0,1,0], [1,0,0],[1,0,-1], [0,1,-1], [1,0,-1]])
@@ -33,21 +34,10 @@ def drawaxes(img, corners, imgpts):
 
     return img
 
-def readConfig(camera_path):
-    """Reads configs.xml and gives the camera parameters"""
-    fs = cv.FileStorage(camera_path+"configs.xml", cv.FILE_STORAGE_READ)
-    camera_matrix = fs.getNode("CameraMatrix").mat()
-    dist_coeffs = fs.getNode("DistortionCoeffs").mat()
-    rvec = fs.getNode("Rvec").mat()
-    tvec = fs.getNode("Tvec").mat()
-    corners = fs.getNode("Corners").mat()
-    fs.release()
-    return camera_matrix, dist_coeffs, rvec, tvec, corners
-
 if __name__ == "__main__":
     for cam in cams:
         # reads the xml file corresponding to this camera
-        cameraMatrix, distCoeffs, rvec, tvec, corners = readConfig(cam)
+        cameraMatrix, distCoeffs, rvec, tvec, corners = utils.readXML(cam+"configs.xml", "CameraMatrix", "DistanceCoeffs", "Rvec", "Tvec", "Corners")
 
         # open the checkerboard video file for this camera in order to draw the cube
         calibration_video_path = cam + "checkerboard.avi"
