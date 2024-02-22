@@ -23,8 +23,9 @@ class camera:
         distcoeffs: distortion coefficients
         rvec: rotation vector
         tvec: translation vector
-        table: lookup table between image points and voxels"""
-    matrix, distcoeffs, rvec, tvec, table = ..., ..., ... ,... , ...
+        table: lookup table between image points and voxels
+        voxelgrid: the voxels that are on or off from this cameras perspective"""
+    matrix, distcoeffs, rvec, tvec, table, voxelgrid = ..., ..., ... , ..., ..., ...
     
     def __init__(self, path):
         self.path = path
@@ -35,11 +36,11 @@ class camera:
         self.table = table()
         self.table.populateTable(voxelgrid, self)
 
-cams = glob.glob("../data/*/")
-
-cameras = []
-for cam in cams:
-    cameras.append(camera(cam))
+    def populateVoxelgrid(self, image):
+        for pixel in image:
+            voxel = self.table[pixel] 
+            if pixel.isOn():
+                voxel.value = True
 
 class lookuptableData:
     """Format for the data inside the lookup table"""
@@ -51,6 +52,7 @@ class lookuptableData:
 
 class table:
     """A lookup table mapping voxels to image pixels for a given camera"""
+    table = ...
     def __init__(self):
         self.table = []
 
@@ -88,14 +90,12 @@ def isForeGround(pixel):
     raise NotImplementedError
 
 if __name__ == "__main__":
+    image = np.zeros((1028,1028))
+    camera_paths = glob.glob("../data/*/")
+    cameras = []
+    for camera_path in camera_paths:
+        cameras.append(camera(camera_path))
     
-    image = np.zeros((256,256))
-    cv.circle(image, (128, 128), 64, 200, 1)
-
-    for x in image:
-        if np.any(x):
-            x = False
-        else:
-            x = True
-
-    print(image)
+    for cam in cameras:
+        cam.initializeTable()
+        cam.populateVoxelgrid(image)
