@@ -9,7 +9,7 @@ AXIS = np.float32([[3,0,0], [0,3,0], [0,0,-3], [1,0,0],[0,1,0],[0,0,-1],[0,0,0 ]
 AXIS = AXIS * SQUARESIZE
 
 # Allows us to iterate over each camera
-cams = glob.glob("../data/*/")
+cams = glob.glob("data/*/")
 cv.namedWindow('image')
 
 def drawcube(img, corners, imgpts):

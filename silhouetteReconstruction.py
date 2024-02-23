@@ -91,7 +91,7 @@ def isForeGround(pixel):
 
 if __name__ == "__main__":
     image = np.zeros((1028,1028))
-    camera_paths = glob.glob("../data/*/")
+    camera_paths = glob.glob("data/*/")
     cameras = []
     for camera_path in camera_paths:
         cameras.append(camera(camera_path))

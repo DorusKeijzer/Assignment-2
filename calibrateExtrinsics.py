@@ -5,7 +5,7 @@ from constants import *
 import utils
 
 # Allows us to iterate over each camera
-cams = glob.glob("../data/*/")
+cams = glob.glob("data/*/")
 cv.namedWindow('image')
 
 

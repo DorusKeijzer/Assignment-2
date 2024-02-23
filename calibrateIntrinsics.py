@@ -4,7 +4,7 @@ import glob
 from constants import *
 
 # Allows us to iterate over each camera
-cams = glob.glob("../data/*/")
+cams = glob.glob("data/*/")
 
 # termination criteria for findchessboard
 criteria = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 30, 0.001)
