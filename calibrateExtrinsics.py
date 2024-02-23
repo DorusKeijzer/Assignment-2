@@ -8,6 +8,7 @@ import utils
 cams = glob.glob("data/*/")
 cv.namedWindow('image')
 
+SCALEFACTOR = 1.3 # by how much the image scales during manual calibration
 
 # stores the pixels coordinates of the clicks
 clickcorners = []
@@ -73,7 +74,7 @@ def manualCorners() -> np.array:
 objectpoints = np.mgrid[0:CHESSBOARDWIDTH,0:CHESSBOARDHEIGHT].T.reshape(-1,2)
 objectpoints = objectpoints.astype(np.float32) 
 objectpoints = np.hstack((objectpoints, np.zeros((objectpoints.shape[0], 1), dtype=np.float32))) # turns into 3d points with z = 0
-objectpoints = SQUARESIZE * objectpoints # multiply with the size of the square
+# objectpoints = SQUARESIZE * objectpoints # multiply with the size of the square
 
 if __name__ == "__main__":
     for cam in cams:
@@ -91,7 +92,12 @@ if __name__ == "__main__":
             exit()
 
         ret, frame = cap.read()
+
+        # image gets resized in order to make clicking more accurate
+        frame = cv.resize(frame, None, fx=SCALEFACTOR, fy=SCALEFACTOR, interpolation=cv.INTER_LINEAR)
+
         cv.setMouseCallback('image', click_event, frame)
+
         cv.imshow("image", frame)
         
         print(f"Please manually specify the corner points for {calibration_video_path}")
@@ -100,8 +106,9 @@ if __name__ == "__main__":
         outercorners = manualCorners()
         innercorners = interpolate(outercorners, CHESSBOARDWIDTH, CHESSBOARDHEIGHT) 
         cv.drawChessboardCorners(frame, (CHESSBOARDWIDTH, CHESSBOARDHEIGHT), innercorners, True)
+        innercorners = innercorners / SCALEFACTOR # scale back to pixel coordinates of the original image
         cv.imshow("image", frame)
-        cv.waitKey(500)
+        cv.waitKey()
 
         ret, rvec, tvec = cv.solvePnP(objectpoints, innercorners, cameraMatrix, distCoeffs)
 
