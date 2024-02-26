@@ -39,26 +39,22 @@ class voxelgrid:
     def __str__(self):
         return str(self.grid)
     
-
-
-
-
-class lookuptableData:
-    """Format for the data inside the lookup table"""
-    voxel_coords, image_coords = ..., ...
-
-    def __init__(self, voxel_coords, image_coords):
-        self.voxel_coords = voxel_coords
-        self.image_coords = image_coords
-
+    
 class table:
     """A lookup table mapping voxels to image pixels for a given camera"""
     table = ...
     def __init__(self):
-        self.table = []
+        self.table = {}
 
-    def add(self, item):
-        self.table.append(item)
+    def __str__(self):
+        res = ""
+        for key, value in self.table.items():
+            res += (f"{key}, {value}\n")
+        return res
+        # return ""
+
+    def add(self, key, value):
+        self.table[key] = value
 
     def populateTable(self, voxels, cam: camera):
         """Projects every voxel onto image pixels"""
@@ -66,16 +62,14 @@ class table:
         for x in range(voxels.shape[0]):
             for y in range(voxels.shape[1]):
                 for z in range(voxels.shape[2]):
-
                     # projects the voxel at x, y, z to 2d image coordinates and add to lookup
-                    x_img, y_img = project(np.array([x,y,z]), cam)
+                    x_img, y_img = project(np.array([x,y,z], dtype = "float64"), cam)
 
-                    self.add(lookuptableData(voxels.grid[x,y,z], (x_img, y_img)))
+                    self.add((x_img, y_img), (x,y,z))
     
 def project(voxel, cam: camera):
     """Projects a 3D voxel onto the 2D image of the specified camera"""
-    debugMatrices(voxel, cam.rvec, cam.tvec, cam.matrix, cam.distcoeffs)
-    imagepoints, _ = cv.projectPoints(voxel, cam.rvec, cam.tvec, cam.matrix, cam.distcoeffs)
+    [[imagepoints]], _ = cv.projectPoints(voxel, cam.rvec, cam.tvec, cam.matrix, cam.distcoeffs)
     return imagepoints
 
 class MyIterator:
@@ -97,6 +91,7 @@ class MyIterator:
 def isForeGround(pixel):
     raise NotImplementedError
 
+
 if __name__ == "__main__":
     camera_paths = glob.glob("data/*/")
     cameras = []
@@ -104,10 +99,15 @@ if __name__ == "__main__":
         cameras.append(camera(camera_path))
     
     for cam in cameras:
-        voxelgrid = voxelgrid(128, 128, 128)
+        voxelgrid = voxelgrid(8, 8, 8)
         cam.initializeTable(voxelgrid)
-        subtracted_video = cam.path + "subtracted"
-        cap = cv.VideoCapture("Video", subtracted_video)
+        print(cam.table)
+        subtracted_video = cam.path + "subtracted.avi"
+        print(subtracted_video)
+        cap = cv.VideoCapture(subtracted_video)
+        ret, image = cap.read()
+        cv.imshow('img',image)
+        cv.waitKey()
         cap.release()
-        # cam.populateVoxelgrid(image)
+        cam.populateVoxelgrid(image)
 

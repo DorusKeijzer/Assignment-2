@@ -8,15 +8,15 @@ def var_name_to_string(var, caller_locals):
     return None
 
 def debugMatrices(*args):
-    """Prints the dimensions of all matrices you give as arguments"""
+    """Prints the dimensions and type of all matrices you give as arguments"""
     caller_frame = inspect.currentframe().f_back
     caller_locals = caller_frame.f_locals
     for arg in args:
         var_name = var_name_to_string(arg, caller_locals)
         if var_name:
-            print(f"{var_name} {arg.shape}")
+            print(f"{var_name} {arg.shape} {arg.dtype}")
         else:
-            print(f"Can't determine shape of {var_name}\n{arg}")
+            print(f"Can't determine shape of {var_name}\n")
 
 def readXML(path, *args):
     """Imports the specified variables from the xml file at path"""
