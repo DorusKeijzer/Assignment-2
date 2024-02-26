@@ -16,7 +16,7 @@ def debugMatrices(*args):
         if var_name:
             print(f"{var_name} {arg.shape}")
         else:
-            print(f"Can't determine shape {arg}")
+            print(f"Can't determine shape of {var_name}\n{arg}")
 
 def readXML(path, *args):
     """Imports the specified variables from the xml file at path"""

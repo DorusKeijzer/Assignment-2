@@ -3,7 +3,7 @@ from constants import *
 import glob
 import numpy as np
 import assignment
-from utils import readXML
+from utils import readXML, debugMatrices
 
 class camera:
     """Stores the properties of a camera
@@ -31,6 +31,18 @@ class camera:
             if pixel.isOn():
                 voxel.value = True
 
+class voxelgrid:
+    def __init__(self,x,y,z):
+        self.grid = np.zeros((x,y,z))
+        self.shape = self.grid.shape
+    
+    def __str__(self):
+        return str(self.grid)
+    
+
+
+
+
 class lookuptableData:
     """Format for the data inside the lookup table"""
     voxel_coords, image_coords = ..., ...
@@ -50,12 +62,19 @@ class table:
 
     def populateTable(self, voxels, cam: camera):
         """Projects every voxel onto image pixels"""
-        for voxel in voxels:
-            x_img, y_img = project(voxel, cam)
-            self.add(lookuptableData(voxel, (x_img, y_img)))
+        # iterates over voxels
+        for x in range(voxels.shape[0]):
+            for y in range(voxels.shape[1]):
+                for z in range(voxels.shape[2]):
+
+                    # projects the voxel at x, y, z to 2d image coordinates and add to lookup
+                    x_img, y_img = project(np.array([x,y,z]), cam)
+
+                    self.add(lookuptableData(voxels.grid[x,y,z], (x_img, y_img)))
     
 def project(voxel, cam: camera):
     """Projects a 3D voxel onto the 2D image of the specified camera"""
+    debugMatrices(voxel, cam.rvec, cam.tvec, cam.matrix, cam.distcoeffs)
     imagepoints, _ = cv.projectPoints(voxel, cam.rvec, cam.tvec, cam.matrix, cam.distcoeffs)
     return imagepoints
 
@@ -83,9 +102,12 @@ if __name__ == "__main__":
     cameras = []
     for camera_path in camera_paths:
         cameras.append(camera(camera_path))
-        subtracted_video = camera_path + "subtracted"
-        cv.VideoCapture()
     
     for cam in cameras:
-        cam.initializeTable()
-        cam.populateVoxelgrid(image)
+        voxelgrid = voxelgrid(128, 128, 128)
+        cam.initializeTable(voxelgrid)
+        subtracted_video = cam.path + "subtracted"
+        cap = cv.VideoCapture("Video", subtracted_video)
+        cap.release()
+        # cam.populateVoxelgrid(image)
+
