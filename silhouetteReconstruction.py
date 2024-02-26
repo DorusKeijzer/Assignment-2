@@ -3,18 +3,7 @@ from constants import *
 import glob
 import numpy as np
 import assignment
-
-def readXML(path, *args):
-    """Imports the specified variables from the xml file at path"""
-    fs = cv.FileStorage(path, cv.FILE_STORAGE_READ)
-    res = []
-    for arg in args:
-        try:
-            res.append(fs.getNode(arg).mat())
-        except:
-            pass
-    fs.release()
-    return res
+from utils import readXML
 
 class camera:
     """Stores the properties of a camera
@@ -29,7 +18,7 @@ class camera:
     
     def __init__(self, path):
         self.path = path
-        self.matrix, self.distcoeffs, self.rvec, self.tvec = readXML(path+"configs.xml", "CameraMatrix", "DistanceCoeffs", "Rvec", "Tvec")
+        self.matrix, self.distcoeffs, self.rvec, self.tvec = readXML(path+"configs.xml", "CameraMatrix", "DistortionCoeffs", "Rvec", "Tvec")
         
     def initializeTable(self, voxelgrid):
         """Sets up the lookup table"""

@@ -120,6 +120,7 @@ def main():
     depth_grid = load_texture_2d('resources/textures/depth_grid.jpg')
 
     grid_positions, grid_colors = generate_grid(config['world_width'], config['world_width'])
+    
     square.set_multiple_positions(grid_positions, grid_colors)
 
     cam_positions, cam_colors = get_cam_positions()
@@ -129,7 +130,7 @@ def main():
     last_time = glfw.get_time()
     while not glfw.window_should_close(window):
         if config['debug_mode']:
-            print(glGetError())
+            print(glGetEr   ror())
 
         current_time = glfw.get_time()
         delta_time = current_time - last_time
