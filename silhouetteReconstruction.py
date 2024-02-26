@@ -79,11 +79,12 @@ def isForeGround(pixel):
     raise NotImplementedError
 
 if __name__ == "__main__":
-    image = np.zeros((1028,1028))
     camera_paths = glob.glob("data/*/")
     cameras = []
     for camera_path in camera_paths:
         cameras.append(camera(camera_path))
+        subtracted_video = camera_path + "subtracted"
+        cv.VideoCapture()
     
     for cam in cameras:
         cam.initializeTable()
