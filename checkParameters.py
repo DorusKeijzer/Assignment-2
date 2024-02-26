@@ -37,7 +37,7 @@ def drawaxes(img, corners, imgpts):
 if __name__ == "__main__":
     for cam in cams:
         # reads the xml file corresponding to this camera
-        cameraMatrix, distCoeffs, rvec, tvec, corners = utils.readXML(cam+"configs.xml", "CameraMatrix", "DistanceCoeffs", "Rvec", "Tvec", "Corners")
+        cameraMatrix, distCoeffs, rvec, tvec, corners = utils.readXML(cam+"configs.xml", "CameraMatrix", "DistortionCoeffs", "Rvec", "Tvec", "Corners")
 
         # open the checkerboard video file for this camera in order to draw the cube
         calibration_video_path = cam + "checkerboard.avi"
@@ -56,6 +56,6 @@ if __name__ == "__main__":
         frame = drawcube(frame, corners, imgpts[3:])
 
         cv.imshow("image", frame)
-        cv.waitKey(500)
+        cv.waitKey(0)
 
         cap.release()

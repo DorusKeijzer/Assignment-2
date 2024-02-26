@@ -14,8 +14,8 @@ if __name__ == "__main__":
     for cam in cams:
         # Stores the corner points.
         objp = np.zeros((CHESSBOARDWIDTH*CHESSBOARDHEIGHT,3), np.float32)
-        objp[:,:2] = SQUARESIZE * np.mgrid[0:CHESSBOARDWIDTH,0:CHESSBOARDHEIGHT].T.reshape(-1,2)
-
+        objp[:,:2] =  np.mgrid[0:CHESSBOARDWIDTH,0:CHESSBOARDHEIGHT].T.reshape(-1,2)
+        objp[:,:2] = SQUARESIZE * objp[:,:2]
         # Arrays to store object points and image points from all the images.
         objpoints = [] # 3d point in real world space
         imgpoints = [] # 2d points in image plane.
@@ -55,9 +55,7 @@ if __name__ == "__main__":
 
         # Release the VideoCapture object 
         cap.release()
-
         ret, mtx, dist, _, _ = cv.calibrateCamera(objpoints, imgpoints, grey.shape[::-1], None, None)
-        
         fs = cv.FileStorage(cam+"intrinsics.xml", cv.FILE_STORAGE_WRITE)
         fs.write("CameraMatrix", mtx)
         fs.write("DistortionCoeffs", dist)
