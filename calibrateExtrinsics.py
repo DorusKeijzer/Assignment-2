@@ -8,7 +8,7 @@ import utils
 cams = glob.glob("data/*/")
 cv.namedWindow('image')
 
-SCALEFACTOR = 1.3 # by how much the image scales during manual calibration
+SCALEFACTOR = 1.2 # by how much the image scales during manual calibration
 
 # stores the pixels coordinates of the clicks
 clickcorners = []
@@ -27,14 +27,12 @@ def interpolate(corners, chessboardwidth, chessboardheight):
                          [0,chessboardwidth-1], 
                          [chessboardheight-1, 0], 
                          [chessboardheight-1, chessboardwidth-1]])   
-    
     # Finds the transformation matrix 
     TransformationMatrix = cv.getPerspectiveTransform(corner_chesscoordinates, corners)
 
     # The coordinates of the chessboard corners in chessboard coordinates (i.e. [[[0,0]],[[0,1]],[[0,2]],...
     #                                                                            [[1,1]],[[1,2]],[[1,3]],..)
     chessboard_coords = np.float32([[[x, y]] for x in range(chessboardheight) for y in range(chessboardwidth)])
-
     # applies the transformation
     inner_corners = cv.perspectiveTransform(chessboard_coords, TransformationMatrix)
     return inner_corners.reshape(-1, 2)
@@ -74,12 +72,13 @@ def manualCorners() -> np.array:
 objectpoints = np.mgrid[0:CHESSBOARDWIDTH,0:CHESSBOARDHEIGHT].T.reshape(-1,2)
 objectpoints = objectpoints.astype(np.float32) 
 objectpoints = np.hstack((objectpoints, np.zeros((objectpoints.shape[0], 1), dtype=np.float32))) # turns into 3d points with z = 0
-# objectpoints = SQUARESIZE * objectpoints # multiply with the size of the square
+objectpoints = SQUARESIZE * objectpoints # multiply with the size of the square
+# objectpoints = np.array([[x,z,y] for x,y,z in objectpoints]) 
 
 if __name__ == "__main__":
     for cam in cams:
         # reads the xml file corresponding to this camera
-        cameraMatrix, distCoeffs = utils.readXML(cam + "intrinsics.xml", "CameraMatrix", "DistanceCoeffs")
+        cameraMatrix, distCoeffs = utils.readXML(cam + "intrinsics.xml", "CameraMatrix", "DistortionCoeffs")
 
         # open the checkerboard video file for this camera
         calibration_video_path = cam + "checkerboard.avi"
@@ -108,10 +107,12 @@ if __name__ == "__main__":
         cv.drawChessboardCorners(frame, (CHESSBOARDWIDTH, CHESSBOARDHEIGHT), innercorners, True)
         innercorners = innercorners / SCALEFACTOR # scale back to pixel coordinates of the original image
         cv.imshow("image", frame)
+        print("Press any key to continue")
+        clickcorners = []
         cv.waitKey()
-
+        print(objectpoints)
         ret, rvec, tvec = cv.solvePnP(objectpoints, innercorners, cameraMatrix, distCoeffs)
-
+        print(rvec, tvec)
         # writes vectors to configs.xml
         fs = cv.FileStorage(cam+"configs.xml", cv.FILE_STORAGE_WRITE)
 
