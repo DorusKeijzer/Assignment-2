@@ -130,7 +130,7 @@ def main():
     last_time = glfw.get_time()
     while not glfw.window_should_close(window):
         if config['debug_mode']:
-            print(glGetEr   ror())
+            print(glGetError())
 
         current_time = glfw.get_time()
         delta_time = current_time - last_time
