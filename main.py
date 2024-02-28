@@ -13,7 +13,7 @@ t1_start = process_time()
 
 if __name__ == "__main__":
     # Define the scripts to run
-    scripts_to_run = ["script1.py", "script2.py", "script3.py"]
+    scripts_to_run = ["calibrateIntrinsics.py", "imgsubtrcontours.py", "calibrateExtrinsics.py", "silhouetteReconstruction.py"]
 
     # Create processes for the first two scripts
     processes = [multiprocessing.Process(target=run_script, args=(script,)) for script in scripts_to_run[:2]]
@@ -26,8 +26,9 @@ if __name__ == "__main__":
     for process in processes:
         process.join()
 
-    # Run the third script
+    # Run the third and fourth script
     subprocess.run(["python", scripts_to_run[2]])
+    subprocess.run(["python", scripts_to_run[3]])
     
 # Stop the stopwatch / counter 
 t1_stop = process_time() 

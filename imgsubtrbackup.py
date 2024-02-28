@@ -49,7 +49,7 @@ if __name__ == "__main__":
         fourcc = cv.VideoWriter_fourcc('M','J','P','G')
 
         # writes to data/camX/subtracted.avi
-        result = cv.VideoWriter(cam + 'subtracted.mov',  
+        result = cv.VideoWriter(cam + 'subtracted.avi',  
                                 fourcc, 
                                 frame_rate, size) 
 
