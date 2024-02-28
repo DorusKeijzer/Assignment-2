@@ -8,8 +8,8 @@ num_frames = 1
 if __name__ == "__main__":
     for cam in cams:
         print(f"reading {cam}")
-        backg = cv.VideoCapture(cam + "background.m4v")
-        cap = cv.VideoCapture(cam + "video.m4v")
+        backg = cv.VideoCapture(cam + "background.avi")
+        cap = cv.VideoCapture(cam + "video.avi")
         frame_rate = cap.get(cv.CAP_PROP_FPS)
         total_gray = None
 
@@ -41,7 +41,7 @@ if __name__ == "__main__":
     fourcc = cv.VideoWriter_fourcc('M','J','P','G')
 
     # writes to data/camX/subtracted.avi
-    result = cv.VideoWriter(cam + 'subtracted.m4v',  
+    result = cv.VideoWriter(cam + 'subtracted.avi',  
                             fourcc, 
                             frame_rate, size) 
 
@@ -49,7 +49,7 @@ if __name__ == "__main__":
         ret, frame = cap.read()
         if ret:
             gray_frame = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
-            gray_frame = cv.GaussianBlur(gray_frame, (5, 5), 0)
+            gray_frame = cv.GaussianBlur(gray_frame, (3, 3), 0)
             gray_frame_float = np.asfarray(gray_frame, dtype=float)
             difference = cv.absdiff(avg_gray, gray_frame_float)
             
@@ -60,7 +60,7 @@ if __name__ == "__main__":
 
 
             # Apply erosion and dilation to the difference image
-            kernel = cv.getStructuringElement(cv.MORPH_ELLIPSE, (3, 3))
+            kernel = cv.getStructuringElement(cv.MORPH_ELLIPSE, (5, 5))
             difference = cv.dilate(difference, kernel, iterations=1)
             difference = cv.erode(difference, kernel, iterations=1)
 
@@ -83,9 +83,9 @@ if __name__ == "__main__":
 
             #cv.imshow("subtracted_frame", subtracted_frame)
             cv.imshow("difference", difference)
-            cv.imshow("frame", frame)
-            cv.imshow("foreground", foreg)
-            cv.imshow("grayframe", gray_frame)
+            # cv.imshow("frame", frame)
+            # cv.imshow("foreground", foreg)
+            # cv.imshow("grayframe", gray_frame)
             result.write(difference)
         else:
             break
