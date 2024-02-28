@@ -150,7 +150,7 @@ def main():
 
         window_width_px, window_height_px = glfw.get_framebuffer_size(window)
         glViewport(0, 0, window_width_px, window_height_px)
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+        glClear(GL_COLORBUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
         draw_objs(square, program, perspective, light_pos, texture_grid, normal_grid, specular_grid, depth_grid)
         draw_objs(cube, program, perspective, light_pos, texture, normal, specular, depth)
