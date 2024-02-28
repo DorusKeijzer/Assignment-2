@@ -33,7 +33,7 @@ if __name__ == "__main__":
         print("Error: Unable to open the video file or stream.")
 
     avg_gray = cv.GaussianBlur(avg_gray, (3, 3), 0)
-    
+
     frame_width = int(cap.get(3)) 
     frame_height = int(cap.get(4)) 
     size = (frame_width, frame_height) 
@@ -41,7 +41,7 @@ if __name__ == "__main__":
     fourcc = cv.VideoWriter_fourcc('M','J','P','G')
 
     # writes to data/camX/subtracted.avi
-    result = cv.VideoWriter(cam + 'subtracted.mov',  
+    result = cv.VideoWriter(cam + 'subtracted.m4v',  
                             fourcc, 
                             frame_rate, size) 
 
@@ -52,8 +52,12 @@ if __name__ == "__main__":
             gray_frame = cv.GaussianBlur(gray_frame, (5, 5), 0)
             gray_frame_float = np.asfarray(gray_frame, dtype=float)
             difference = cv.absdiff(avg_gray, gray_frame_float)
+            
+            foreg = cv.absdiff(avg_gray, difference)
+            
             difference = np.uint8(np.clip(difference, 0, 255))
             _, difference = cv.threshold(difference, 0, 255, cv.THRESH_BINARY + cv.THRESH_OTSU)
+
 
             # Apply erosion and dilation to the difference image
             kernel = cv.getStructuringElement(cv.MORPH_ELLIPSE, (3, 3))
@@ -61,6 +65,7 @@ if __name__ == "__main__":
             difference = cv.erode(difference, kernel, iterations=1)
 
             contours, hierarchy = cv.findContours(difference, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
+
 
             # Find the largest contour
             max_area = 0
@@ -75,9 +80,13 @@ if __name__ == "__main__":
             if max_contour is not None:
                 cv.drawContours(frame, [max_contour], -1, (0, 255, 0), 2)
 
+
+            #cv.imshow("subtracted_frame", subtracted_frame)
             cv.imshow("difference", difference)
             cv.imshow("frame", frame)
-            result.write(frame)
+            cv.imshow("foreground", foreg)
+            cv.imshow("grayframe", gray_frame)
+            result.write(difference)
         else:
             break
         key = cv.waitKey(20)
